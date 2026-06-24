@@ -1,0 +1,18 @@
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# QGIS files
+*.qgz
+*.qgd
+*.aux.xml
+*.lock
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Optional large data folders
+01_data_raw/
+02_data_cleaned/
