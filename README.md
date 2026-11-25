@@ -3,8 +3,24 @@
 **Project status:** Work in progress
 **Study period:** 1991–2020 for the current national statistical database
 **Geographical focus:** Zambia
-**Implemented technologies:** PostgreSQL and SQL
-**Potential supporting tools for planned extensions:** Python, R, QGIS and Earth-observation data
+**Implemented technologies:** PostgreSQL, SQL and Python
+**Potential supporting tools for planned extensions:** R, QGIS and Earth-observation data
+
+## Contents
+
+1. [Project overview](#1-project-overview)
+2. [Research aim and objectives](#2-research-aim-and-objectives)
+3. [Research questions](#3-research-questions)
+4. [Database architecture and technologies](#4-database-architecture-and-technologies)
+5. [Data sources and provenance](#5-data-sources-and-provenance)
+6. [Database validation and restoration](#6-database-validation-and-restoration)
+7. [Preliminary national-level findings](#7-preliminary-national-level-findings)
+8. [Planned geospatial and Earth-observation extension](#8-planned-geospatial-and-earth-observation-extension)
+9. [Methodological limitations](#9-methodological-limitations)
+10. [Research integrity and reporting principles](#10-research-integrity-and-reporting-principles)
+11. [Current status and next steps](#11-current-status-and-next-steps)
+12. [References](#references)
+
 
 ## 1. Project overview
 
@@ -62,7 +78,37 @@ The current database is implemented in PostgreSQL and organised into four schema
 
 The database currently contains 10 physical tables and 8 analytical views. Its design separates subject areas while providing a structured basis for cross-domain queries. The current implementation includes agricultural records for 11 crops and annual observations spanning 1991–2020.
 
-PostgreSQL provides the relational data-management environment, while SQL is used for validation, aggregation and statistical analysis. Python and R are available as supporting analytical environments, and QGIS is intended to support the future spatial component. The inclusion of these tools in the project scope does not imply that every planned analytical workflow has already been implemented.
+PostgreSQL provides the relational data-management environment, while SQL is used for data validation, aggregation and statistical analysis. Python has also been used to implement a reproducible analytical workflow that generates national-level figures from the project's processed CSV datasets. R remains available as a supporting analytical environment, while QGIS is intended to support the planned spatial component. These implementations should be distinguished from the broader geospatial and Earth observation integration, which remains a planned extension.
+
+### Analytical workflow and reproducibility
+
+Python is used to generate 12 analytical figures covering agricultural production, harvested area, aggregate crop yield, crop-level comparisons, climate trends, climate–yield relationships, selected agricultural greenhouse-gas emissions, fertiliser nutrient application and emissions intensity. The analysis covers 1991–2020 and uses annual national-level observations.
+
+The workflow is implemented in `analysis/python/generate_analytical_figures.py`. It uses NumPy, pandas, Matplotlib and Seaborn, with package versions specified in the root-level `requirements.txt` file. The generated figures are exported in PNG and SVG formats to `outputs/figures/`. Their descriptions and analytical qualifications are provided in the [analytical figures catalogue](outputs/figures/README.md). The export routine skips figure files that already exist; an ordinary rerun therefore does not automatically overwrite previously generated outputs.
+
+To recreate the analytical environment and run the script in Windows PowerShell:
+
+```powershell
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python analysis/python/generate_analytical_figures.py
+```
+
+The workflow requires the following input files:
+
+- `data/processed/agricultural/production.csv`
+- `data/processed/agricultural/area_harvested.csv`
+- `data/processed/agricultural/yields.csv`
+- `data/processed/agricultural/fertilizer_by_nutrient.csv`
+- `data/processed/climate/Rainfall.csv`
+- `data/processed/climate/Temperature.csv`
+- `data/processed/emissions/co2_equivalent.csv`
+- `data/reference/crops.csv`
+
+These input datasets are currently excluded from version control. Consequently, the published script and dependency specification support reproduction of the workflow, but a complete rerun also requires access to the corresponding input data, prepared in the expected directory structure. Users should consult the project's data-source and provenance documentation before obtaining or redistributing those datasets.
+
+The figures provide descriptive and exploratory analysis rather than evidence of causal relationships. The emissions-intensity indicator is calculated by dividing the combined emissions from the four selected categories, converted from kilotonnes to kilograms of CO2-equivalent, by the combined production in tonnes of the 11 selected crops. It covers only these four emissions categories and the production of the selected crops. It should not be interpreted as a comprehensive national agricultural emissions inventory, national emissions-intensity estimate or complete agricultural carbon footprint. The analysis is national in scope and does not, by itself, constitute completed spatial analysis or Earth observation integration.
 
 ## 5. Data sources and provenance
 
@@ -80,7 +126,7 @@ Data integrity is a central component of the project. Validation has included co
 
 For production, yields and land use, 990 of 990 records across the three datasets matched between the CSV sources and PostgreSQL. Each dataset contains 330 records, representing 11 crops over 30 years. Additional checks covered the environmental and emissions tables, reference records, database constraints and analytical views.
 
-A custom-format PostgreSQL backup was restored into an isolated test database on 23 November 2026. The restoration verification reported matching row counts across 10 physical tables and 8 views, together with matching table fingerprints and sequence configurations and values. This demonstrates that the tested backup could be restored consistently in the tested environment. The test predates the structural corrections completed on 24 November 2026; it therefore verifies the database state restored on 23 November, not the subsequently corrected state. It does not, by itself, establish a complete disaster-recovery capability or cross-platform recovery.
+A custom-format PostgreSQL backup was restored into an isolated test database on 23 November 2026. The restoration verification reported matching row counts across 10 physical tables and 8 views, together with matching table fingerprints and sequence configurations and values. This demonstrates that the tested backup could be restored consistently in the tested environment. The test predates the structural corrections completed on 24 November 2026; it therefore verifies the database state restored on 23 November, not the subsequently corrected state. It does not, by itself, establish a complete disaster-recovery capability or cross-platform recovery. The later validation records should be consulted for evidence relating to the corrected database state.
 
 The detailed validation and restoration records are retained in `Documentation/validation_records/`. The database backup is stored separately in `Backups/database/`. Each verification record should be interpreted according to its stated scope, date and limitations, rather than as a claim that every aspect of the wider research framework has been validated.
 
@@ -108,9 +154,9 @@ These correlations are exploratory rather than causal estimates. National annual
 
 The estimated rainfall trend was approximately 5.24 mm per year, although the linear model explained a relatively modest proportion of the observed variation (R² approximately 0.212). The estimated temperature slope was approximately −0.0035 °C per year, with a very low R² of approximately 0.011. The latter result should not be interpreted as compelling evidence of a meaningful long-term cooling trend.
 
-The precipitation and temperature series are provisionally interpreted using the expected units of millimetres and degrees Celsius, respectively. These unit assignments remain subject to confirmation against version-specific metadata for the downloaded workbook. The unresolved workbook-version and distribution discrepancy is documented in Section 5 and must be considered when interpreting these results.
+The precipitation and temperature series are provisionally interpreted using the expected units of millimetres and degrees Celsius, respectively. These unit assignments remain subject to confirmation against version-specific metadata for the downloaded workbook. The unresolved workbook-version and distribution discrepancy is documented in Section 5 and must be considered when interpreting these results. Accordingly, the reported climate correlations and trends should be treated as provisional descriptive results until the workbook's version, distribution history and measurement units have been reconciled.
 
-Zambia-focused research has examined relationships between rainfall shocks and crop productivity, including implications for agricultural water-risk management (Matchaya et al., 2022). Other research has modelled climate-change impacts on rainfed maize yields under conventional and optimised crop-management conditions (Siatwiinda et al., 2021). These studies provide relevant research context, but they do not independently validate the correlations or trend estimates calculated in this project.
+Zambia-focused research has examined the relationships between rainfall variability and crop productivity, including their implications for agricultural water-risk management (Matchaya et al., 2022). Other studies have modelled the effects of climate change on rainfed maize yields under conventional and optimised crop-management conditions (Siatwiinda et al., 2021). These studies provide relevant empirical and methodological context for the present research; however, their findings do not independently validate the correlations or trend estimates derived from the datasets analysed in this project.
 
 ### 7.3 Agricultural production and harvested area
 
